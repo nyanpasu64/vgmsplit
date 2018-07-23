@@ -15,11 +15,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "wave_writer.h"
-#include "gme/gme.h"
+#include <gme/gme.h>
 #include <iostream>
 #include <string>
 #include <sstream>
 
+
+using gme_t = Music_Emu;
 
 std::string num2str(int x) {
 	std::stringstream result;
@@ -30,11 +32,6 @@ std::string num2str(int x) {
 }
 
 void writeTheWave(gme_t* emu, int tracknum, int tracklen, int i, int sample_rate) {
-	//Ignoring silence allows us to record tracks that start in or have
-	//long periods of silence. Unfortunately, this also means that
-	//if a track is of finite length, we still need to have its length separately.
-	gme_ignore_silence(emu, true);
-	
 	//Create a muting mask to isolate the channel
 	int mute = -1;
 	mute ^= (1 << i);
@@ -97,6 +94,10 @@ int main ( int argc, char** argv ) {
 	std::cout << "How long to record, in seconds: ";
 	std::cin >> tracklen;
 	
+	//Ignoring silence allows us to record tracks that start in or have
+	//long periods of silence. Unfortunately, this also means that
+	//if a track is of finite length, we still need to have its length separately.
+	gme_ignore_silence(emu, true);
 	const char* err2 = gme_start_track(emu, tracknum);
 	if (err2) {
 		std::cout << err2;
