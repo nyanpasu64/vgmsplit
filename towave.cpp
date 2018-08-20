@@ -15,7 +15,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "wave_writer.h"
-#include <gme/gme.h>
+#include "gme/gme.h"
 #include <iostream>
 #include <string>
 #include <sstream>
