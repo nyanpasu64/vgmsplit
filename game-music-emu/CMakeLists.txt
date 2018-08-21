@@ -1,15 +1,42 @@
 # CMake project definition file.
 project(libgme)
+cmake_minimum_required(VERSION 3.7 FATAL_ERROR)
+
 
 include (CheckCXXCompilerFlag)
 
 # When version is changed, also change the one in gme/gme.h to match
 set(GME_VERSION 0.6.2 CACHE INTERNAL "libgme Version")
 
-# 2.6+ always assumes FATAL_ERROR, but 2.4 and below don't.
-# Of course, 2.4 might work, in which case you're welcome to drop
-# down the requirement, but I can't test that.
-cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
+
+
+
+# Shared library defined here
+add_subdirectory(gme)
+
+# EXCLUDE_FROM_ALL adds build rules but keeps it out of default build
+add_subdirectory(player EXCLUDE_FROM_ALL)
+add_subdirectory(demo EXCLUDE_FROM_ALL)
+
+
+# Find all targets, to add cxx flags. http://fabic.net/notes/2017/12/22/cmake-random-notes/
+get_property(subdirs_list
+        DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        PROPERTY SUBDIRECTORIES)
+
+set(targets "")
+
+foreach(subdir ${subdirs_list})
+    get_property(_targets_list
+            DIRECTORY "${subdir}"
+            PROPERTY BUILDSYSTEM_TARGETS )
+    list(APPEND targets ${_targets_list})
+endforeach()
+
+#message(${targets})
+
+
+# Setup target cxx flags.
 
 # Default emulators to build (all of them! ;)
 if (NOT DEFINED USE_GME_AY)
@@ -70,17 +97,17 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
     OR
     CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -W -Wextra")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    set (cxx_flags "${cxx_flags} -Wall -W -Wextra")
+    set (cxx_flags "${cxx_flags} -std=c++11")
 
     # Assume we have visibility support on any compiler that supports C++11
     add_definitions (-DLIBGME_VISIBILITY)
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -fvisibility-inlines-hidden")
+    set (cxx_flags "${cxx_flags} -fvisibility=hidden -fvisibility-inlines-hidden")
 
     # Try to protect against undefined behavior from signed integer overflow
     # This has caused miscompilation of code already and there are other
     # potential uses; see https://bitbucket.org/mpyne/game-music-emu/issues/18/
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fwrapv")
+    set (cxx_flags "${cxx_flags} -fwrapv")
 
     if (NOT DEFINED LIBGME_SWITCH_FALLTHROUGH)
         check_cxx_compiler_flag (-Wimplicit-fallthrough __LIBGME_SWITCH_FALLTHROUGH_WARNINGS)
@@ -92,9 +119,9 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
     if (ENABLE_UBSAN)
         # GCC needs -static-libubsan
         if (NOT BUILD_SHARED_LIBS AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-            set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined -static-libubsan")
+            set (cxx_flags "${cxx_flags} -fsanitize=undefined -static-libubsan")
         else()
-            set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
+            set (cxx_flags "${cxx_flags} -fsanitize=undefined")
         endif()
     endif()
 endif ()
@@ -102,12 +129,11 @@ endif ()
 if(LIBGME_SWITCH_FALLTHROUGH)
      # Avoid warning spam about switch fallthroughs, which are numerous in
      # the codebase.
-     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wimplicit-fallthrough=0")
+     set (cxx_flags "${cxx_flags} -Wimplicit-fallthrough=0")
 endif()
 
-# Shared library defined here
-add_subdirectory(gme)
 
-# EXCLUDE_FROM_ALL adds build rules but keeps it out of default build
-add_subdirectory(player EXCLUDE_FROM_ALL)
-add_subdirectory(demo EXCLUDE_FROM_ALL)
+foreach(target ${targets})
+    target_compile_definitions(${target} PUBLIC )
+    set_target_properties(${target} PROPERTIES COMPILE_FLAGS ${cxx_flags})
+endforeach(target)
