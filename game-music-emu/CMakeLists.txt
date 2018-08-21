@@ -8,34 +8,6 @@ include (CheckCXXCompilerFlag)
 # When version is changed, also change the one in gme/gme.h to match
 set(GME_VERSION 0.6.2 CACHE INTERNAL "libgme Version")
 
-
-
-
-# Shared library defined here
-add_subdirectory(gme)
-
-# EXCLUDE_FROM_ALL adds build rules but keeps it out of default build
-add_subdirectory(player EXCLUDE_FROM_ALL)
-add_subdirectory(demo EXCLUDE_FROM_ALL)
-
-
-# Find all targets, to add cxx flags. http://fabic.net/notes/2017/12/22/cmake-random-notes/
-get_property(subdirs_list
-        DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-        PROPERTY SUBDIRECTORIES)
-
-set(targets "")
-
-foreach(subdir ${subdirs_list})
-    get_property(_targets_list
-            DIRECTORY "${subdir}"
-            PROPERTY BUILDSYSTEM_TARGETS )
-    list(APPEND targets ${_targets_list})
-endforeach()
-
-#message(${targets})
-
-
 # Setup target cxx flags.
 
 # Default emulators to build (all of them! ;)
@@ -92,6 +64,10 @@ option(BUILD_SHARED_LIBS "Build shared library (set to OFF for static library)" 
 
 option(ENABLE_UBSAN "Enable Undefined Behavior Sanitizer error-checking" ON)
 
+
+set(cxx_flags "")
+#set(link_flags "")
+
 # Check for GCC/Clang "visibility" support.
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
     OR
@@ -133,7 +109,31 @@ if(LIBGME_SWITCH_FALLTHROUGH)
 endif()
 
 
+## Setup targets
+
+# Shared library defined here
+add_subdirectory(gme)
+
+# EXCLUDE_FROM_ALL adds build rules but keeps it out of default build
+add_subdirectory(player EXCLUDE_FROM_ALL)
+add_subdirectory(demo EXCLUDE_FROM_ALL)
+
+
+# Find all targets, to add cxx flags. http://fabic.net/notes/2017/12/22/cmake-random-notes/
+get_property(subdirs_list
+        DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        PROPERTY SUBDIRECTORIES)
+set(targets "")
+foreach(subdir ${subdirs_list})
+    get_property(_targets_list
+            DIRECTORY "${subdir}"
+            PROPERTY BUILDSYSTEM_TARGETS )
+    list(APPEND targets ${_targets_list})
+endforeach()
+
+
 foreach(target ${targets})
-    target_compile_definitions(${target} PUBLIC )
+#    target_compile_definitions(${target} PUBLIC )
+#    target_link_libraries(${target} ${cxx_flags})
     set_target_properties(${target} PROPERTIES COMPILE_FLAGS ${cxx_flags})
 endforeach(target)

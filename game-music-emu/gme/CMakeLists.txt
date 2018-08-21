@@ -175,6 +175,10 @@ else()
     message("ZLib library not found, disabling support for compressed formats such as VGZ")
 endif()
 
+
+separate_arguments(cxx_flags)
+target_link_libraries(gme ${cxx_flags})
+
 # The version is the release.  The "soversion" is the API version.  As long
 # as only build fixes are performed (i.e. no backwards-incompatible changes
 # to the API), the SOVERSION should be the same even when bumping up VERSION.
