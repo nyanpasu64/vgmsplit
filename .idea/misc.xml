@@ -2,9 +2,6 @@
 <project version="4">
   <component name="CMakeWorkspace" PROJECT_DIR="$PROJECT_DIR$" />
   <component name="CidrRootsConfiguration">
-    <libraryRoots>
-      <file path="$PROJECT_DIR$/game-music-emu" />
-    </libraryRoots>
     <excludeRoots>
       <file path="$PROJECT_DIR$/build" />
     </excludeRoots>
