@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.5)
-project(towave VERSION 3.1.0 LANGUAGES CXX C)
+project(towave-j VERSION 3.1.0 LANGUAGES CXX C)
 
 
-# Add towave
-add_executable(towave
+# Add towave-j
+add_executable(towave-j
         towave.cpp
         wave_writer.c
         )
-target_include_directories(towave PRIVATE game-music-emu)
+target_include_directories(towave-j PRIVATE game-music-emu)
 
 
 # Add GME library
@@ -19,5 +19,5 @@ add_subdirectory(game-music-emu)
 
 
 # Link to libgme
-add_dependencies(towave gme)
-target_link_libraries(towave PRIVATE gme)
+add_dependencies(towave-j gme)
+target_link_libraries(towave-j PRIVATE gme)
