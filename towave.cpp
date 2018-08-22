@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-#include "tclap/CmdLine.h"
+#include "CLI11/CLI11.hpp"
 
 #include "wave_writer.h"
 #include "gme/gme.h"
@@ -77,33 +77,22 @@ void writeTheWave(gme_t *emu, int tracklen_ms, int i, int sample_rate) {
 }
 
 int main ( int argc, char** argv ) {
+	CLI::App app{"towave-j: Program to record channels from chiptune files"};
+
 	std::string filename;
-	int tracknum;
+	int tracknum = 1;
 	int tracklen_ms;
-	try {
-		TCLAP::CmdLine cmd{
-			"Program to record channels from chiptune files", ' ', TOWAVE_VERSION, /*helpAndVersion=*/false};
+	{
+		double _tracklen_s = -1;
 
-		// Proposed syntax: auto fooArg = cmd.add<TCLAP::UnlabeledValueArg, int>{};
-		TCLAP::UnlabeledValueArg<string> filenameArg{
-				"filename", "Any music file accepted by GME", /*req=*/true, /*val=*/"", "filename"};
-		cmd.add(filenameArg);
-		TCLAP::UnlabeledValueArg<int> tracknumArg{  // FIXME req should be optional but TCLAP barfs
-				"tracknum", "Track number (first track is 1)", /*req=*/true, /*val=*/1, "tracknum"};
-		cmd.add(tracknumArg);
-		TCLAP::UnlabeledValueArg<double> tracklenArg{
-				"tracklen", "How long to record, in seconds", /*req=*/false, /*val=*/-1, "tracklen"};
-		cmd.add(tracklenArg);
+		app.add_option("filename", filename, "Any music file accepted by GME")->required();
+		app.add_option("tracknum", tracknum, "Track number (first track is 1)");
+		app.add_option("tracklen", _tracklen_s, "How long to record, in seconds");
+		app.failure_message(CLI::FailureMessage::help);
+		CLI11_PARSE(app, argc, argv);
 
-		cmd.parse(argc, argv);
-
-		filename = filenameArg.getValue();
-		tracknum = tracknumArg.getValue() - 1;
-		tracklen_ms = static_cast<int>(tracklenArg.getValue() * 1000);
-
-	} catch (TCLAP::ArgException &e) {
-		std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl;
-		return 1;
+		tracknum -= 1;
+		tracklen_ms = static_cast<int>(_tracklen_s * 1000);
 	}
 
 	gme_t* emu;
