@@ -132,8 +132,8 @@ foreach(subdir ${subdirs_list})
 endforeach()
 
 
-foreach(target ${targets})
-#    target_compile_definitions(${target} PUBLIC )
-#    target_link_libraries(${target} ${cxx_flags})
-    set_target_properties(${target} PROPERTIES COMPILE_FLAGS ${cxx_flags})
-endforeach(target)
+if(${cxx_flags})
+    foreach(target ${targets})
+        set_target_properties(${target} PROPERTIES COMPILE_FLAGS ${cxx_flags})
+    endforeach(target)
+endif()
