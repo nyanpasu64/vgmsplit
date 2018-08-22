@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using gme_t = Music_Emu;
 
+static const char* APP_NAME = "towave-j";
 static const int BUF_SIZE = 1024;
 
 
@@ -73,10 +74,10 @@ int main ( int argc, char** argv ) {
 	
 	if (argc > 1) filename = argv[argc - 1];
 	else {
-		std::cout << "Please call towave from the command prompt." << std::endl;
+		std::cout << "Please call " << APP_NAME << " from the command prompt." << std::endl;
 		std::cout << "Proper syntax is" << std::endl;
-		std::cout << "\ttowave filename" << std::endl;
-		std::cout << "Where filename is of any type accepted by GME. (See readme)";
+		std::cout << "\t" << APP_NAME << " filename" << std::endl;
+		std::cout << "Where filename is of any type accepted by GME. (See readme)" << std::endl;
 		return 0;
 	}
 	
