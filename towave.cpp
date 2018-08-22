@@ -1,5 +1,8 @@
 //towave - a program to extract the channels from a chiptune file
 //Copyright 2011 Bryan Mitchell
+
+// towave-j fork by nyanpasu64, 2018-
+
 /*
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -23,6 +26,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using gme_t = Music_Emu;
 
+static const int BUF_SIZE = 1024;
+
+
 std::string num2str(int x) {
 	std::stringstream result;
 	
@@ -38,8 +44,7 @@ void writeTheWave(gme_t* emu, int tracknum, int tracklen, int i, int sample_rate
 	gme_mute_voices(emu, mute);
 	
 	//Create a buffer to hand the data from GME to wave_write
-	int buf_size = 1024;
-	short buffer[1024];
+	short buffer[BUF_SIZE];
 	
 	//The filename will be a number, followed by a space and its track title.
 	//This ensures both unique and (in most cases) descriptive file names.
@@ -55,8 +60,8 @@ void writeTheWave(gme_t* emu, int tracknum, int tracklen, int i, int sample_rate
 	//Perform the magic.
 	while (gme_tell(emu) < tracklen*1000) {
 		//If an error occurs during play, we still need to close out the file
-		if (gme_play(emu, buf_size, buffer)) break;
-		wave_write(buffer, buf_size);
+		if (gme_play(emu, BUF_SIZE, buffer)) break;
+		wave_write(buffer, BUF_SIZE);
 	}
 	
 	//Properly finishes the header and closes the internal file object
@@ -108,8 +113,8 @@ int main ( int argc, char** argv ) {
 		int m = -1;
 		m ^= 1;
 		gme_mute_voices(emu, m);
-		short buf[1024];
-		gme_play(emu, 1024, buf);
+		short buf[BUF_SIZE];
+		gme_play(emu, BUF_SIZE, buf);
 	}
 	
 	for (int i = 0; i < gme_voice_count(emu); i++) {
