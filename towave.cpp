@@ -74,10 +74,12 @@ int main ( int argc, char** argv ) {
 	
 	if (argc > 1) filename = argv[argc - 1];
 	else {
-		std::cout << "Please call " << APP_NAME << " from the command prompt." << std::endl;
-		std::cout << "Proper syntax is" << std::endl;
-		std::cout << "\t" << APP_NAME << " filename" << std::endl;
-		std::cout << "Where filename is of any type accepted by GME. (See readme)" << std::endl;
+		std::cout <<
+			"Please call " << APP_NAME << " from the command prompt.\n"
+			"Proper syntax is\n"
+			"\t" << APP_NAME << " filename\n"
+			"Where filename is of any type accepted by GME. (See readme)\n";
+		std::cout.flush();
 		return 0;
 	}
 	
