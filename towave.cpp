@@ -38,7 +38,7 @@ std::string num2str(int x) {
 	return result.str();
 }
 
-void writeTheWave(gme_t* emu, int tracknum, int tracklen, int i, int sample_rate) {
+void writeTheWave(gme_t *emu, int tracklen, int i, int sample_rate) {
 	//Create a muting mask to isolate the channel
 	int mute = -1;
 	mute ^= (1 << i);
@@ -124,7 +124,7 @@ int main ( int argc, char** argv ) {
 			std::cout << err;
 			return 1;
 		}
-		writeTheWave(emu, tracknum, tracklen, i, sample_rate);
+		writeTheWave(emu, tracklen, i, sample_rate);
 	}
 	
 	gme_delete(emu);
