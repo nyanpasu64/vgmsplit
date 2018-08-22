@@ -103,7 +103,7 @@ typedef unsigned char byte;
 // Setup compiler defines useful for exporting required public API symbols in gme.cpp
 #ifndef BLARGG_EXPORT
     #if defined (_WIN32) && defined(BLARGG_BUILD_DLL)
-        #define BLARGG_EXPORT __declspec(dllexport)
+        #define BLARGG_EXPORT
     #elif defined (LIBGME_VISIBILITY)
         #define BLARGG_EXPORT __attribute__((visibility ("default")))
     #else
