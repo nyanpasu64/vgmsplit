@@ -34,6 +34,8 @@ using std::string;
 static const char* APP_NAME = "towave-j";
 static const int BUF_SIZE = 1024;
 
+static const int MS_SECOND = 1000;
+
 
 std::string num2str(int x) {
 	std::stringstream result;
@@ -43,7 +45,7 @@ std::string num2str(int x) {
 	return result.str();
 }
 
-void writeTheWave(gme_t *emu, int tracklen, int i, int sample_rate) {
+void writeTheWave(gme_t *emu, int tracklen_ms, int i, int sample_rate) {
 	//Create a muting mask to isolate the channel
 	int mute = -1;
 	mute ^= (1 << i);
@@ -64,7 +66,7 @@ void writeTheWave(gme_t *emu, int tracklen, int i, int sample_rate) {
 	wave_enable_stereo(); //GME always outputs in stereo
 	
 	//Perform the magic.
-	while (gme_tell(emu) < tracklen*1000) {
+	while (gme_tell(emu) < tracklen_ms) {
 		//If an error occurs during play, we still need to close out the file
 		if (gme_play(emu, BUF_SIZE, buffer)) break;
 		wave_write(buffer, BUF_SIZE);
@@ -76,15 +78,29 @@ void writeTheWave(gme_t *emu, int tracklen, int i, int sample_rate) {
 
 int main ( int argc, char** argv ) {
 	std::string filename;
+	int tracknum;
+	int tracklen_ms;
 	try {
 		TCLAP::CmdLine cmd{
 			"Program to record channels from chiptune files", ' ', TOWAVE_VERSION, /*helpAndVersion=*/false};
+
+		// Proposed syntax: auto fooArg = cmd.add<TCLAP::UnlabeledValueArg, int>{};
 		TCLAP::UnlabeledValueArg<string> filenameArg{
 				"filename", "Any music file accepted by GME", /*req=*/true, /*val=*/"", "filename"};
 		cmd.add(filenameArg);
+		TCLAP::UnlabeledValueArg<int> tracknumArg{  // FIXME req should be optional but TCLAP barfs
+				"tracknum", "Track number (first track is 1)", /*req=*/true, /*val=*/1, "tracknum"};
+		cmd.add(tracknumArg);
+		TCLAP::UnlabeledValueArg<double> tracklenArg{
+				"tracklen", "How long to record, in seconds", /*req=*/false, /*val=*/-1, "tracklen"};
+		cmd.add(tracklenArg);
 
 		cmd.parse(argc, argv);
+
 		filename = filenameArg.getValue();
+		tracknum = tracknumArg.getValue() - 1;
+		tracklen_ms = static_cast<int>(tracklenArg.getValue() * 1000);
+
 	} catch (TCLAP::ArgException &e) {
 		std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl;
 		return 1;
@@ -98,18 +114,7 @@ int main ( int argc, char** argv ) {
 		std::cout << err1;
 		return 1;
 	}
-	
-	int tracknum, tracklen;
-	
-	std::cout << "Track number (first track is 1): ";
-	std::cin >> tracknum;
-	tracknum--; //first track for GME is 0
-	std::cout << std::endl;
-	
-	std::cout << "How long to record, in seconds: ";
-	std::cin >> tracklen;
-	
-	//Ignoring silence allows us to record tracks that start in or have
+
 	//long periods of silence. Unfortunately, this also means that
 	//if a track is of finite length, we still need to have its length separately.
 	gme_ignore_silence(emu, true);
@@ -119,12 +124,21 @@ int main ( int argc, char** argv ) {
 		return 1;
 	}
 	//Run the emulator for a second while muted to eliminate opening sound glitch
-	for (int len = 0; len < 1000; len = gme_tell(emu)) {
+	for (int len = 0; len < MS_SECOND; len = gme_tell(emu)) {
 		int m = -1;
 		m ^= 1;
 		gme_mute_voices(emu, m);
 		short buf[BUF_SIZE];
 		gme_play(emu, BUF_SIZE, buf);
+	}
+
+	// If no length specified, obtain track length from file.
+	if (tracklen_ms < 0) {
+		gme_info_t* info;
+		gme_track_info(emu, &info, tracknum);
+
+		tracklen_ms = info->play_length;  // Guaranteed to be either valid, or 2.5 minutes.
+		delete info;
 	}
 	
 	for (int i = 0; i < gme_voice_count(emu); i++) {
@@ -133,7 +147,7 @@ int main ( int argc, char** argv ) {
 			std::cout << err;
 			return 1;
 		}
-		writeTheWave(emu, tracklen, i, sample_rate);
+		writeTheWave(emu, tracklen_ms, i, sample_rate);
 	}
 	
 	gme_delete(emu);
