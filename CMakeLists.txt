@@ -9,6 +9,9 @@ add_executable(towave-j
         )
 target_include_directories(towave-j PRIVATE game-music-emu)
 
+if (MINGW)
+    target_link_libraries(towave-j PRIVATE -static-libgcc -static-libstdc++ -static)
+endif ()
 
 # Add GME library
 SET(BUILD_SHARED_LIBS OFF
