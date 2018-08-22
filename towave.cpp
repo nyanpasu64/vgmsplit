@@ -17,14 +17,19 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
+#include "tclap/CmdLine.h"
+
 #include "wave_writer.h"
 #include "gme/gme.h"
+
 #include <iostream>
 #include <string>
 #include <sstream>
 
 
 using gme_t = Music_Emu;
+using std::string;
 
 static const char* APP_NAME = "towave-j";
 static const int BUF_SIZE = 1024;
@@ -71,18 +76,20 @@ void writeTheWave(gme_t *emu, int tracklen, int i, int sample_rate) {
 
 int main ( int argc, char** argv ) {
 	std::string filename;
-	
-	if (argc > 1) filename = argv[argc - 1];
-	else {
-		std::cout <<
-			"Please call " << APP_NAME << " from the command prompt.\n"
-			"Proper syntax is\n"
-			"\t" << APP_NAME << " filename\n"
-			"Where filename is of any type accepted by GME. (See readme)\n";
-		std::cout.flush();
-		return 0;
+	try {
+		TCLAP::CmdLine cmd{
+			"Program to record channels from chiptune files", ' ', TOWAVE_VERSION, /*helpAndVersion=*/false};
+		TCLAP::UnlabeledValueArg<string> filenameArg{
+				"filename", "Any music file accepted by GME", /*req=*/true, /*val=*/"", "filename"};
+		cmd.add(filenameArg);
+
+		cmd.parse(argc, argv);
+		filename = filenameArg.getValue();
+	} catch (TCLAP::ArgException &e) {
+		std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl;
+		return 1;
 	}
-	
+
 	gme_t* emu;
 	int sample_rate = 44100;
 	const char* err1 = gme_open_file(filename.c_str(), &emu, sample_rate);
