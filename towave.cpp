@@ -46,6 +46,17 @@ std::string num2str(int x) {
 }
 
 void writeTheWave(gme_t* emu, int tracknum, int tracklen_ms, int i, int sample_rate) {
+	std::string channel_name = num2str(i+1);
+	channel_name += "-";
+	channel_name += (std::string)gme_voice_name(emu, i);
+	std::cout << "Rendering track " << channel_name << "..." << std::endl;
+
+	const char* err = gme_start_track(emu, tracknum);
+	if (err) {
+		std::cerr << err;
+		exit(1);
+	}
+
 	//Create a muting mask to isolate the channel
 	int mute = -1;
 	mute ^= (1 << i);
@@ -56,12 +67,9 @@ void writeTheWave(gme_t* emu, int tracknum, int tracklen_ms, int i, int sample_r
 	
 	//The filename will be a number, followed by a space and its track title.
 	//This ensures both unique and (in most cases) descriptive file names.
-	std::string wav_name = num2str(i+1);
-	wav_name += "-";
-	wav_name += (std::string)gme_voice_name(emu, i);
-	wav_name += ".wav";
-	
+
 	//Sets up the header of the WAV file so it is, in fact, a WAV
+	auto wav_name = channel_name + ".wav";
 	wave_open(sample_rate, wav_name.c_str());
 	wave_enable_stereo(); //GME always outputs in stereo
 	
@@ -100,7 +108,7 @@ int main ( int argc, char** argv ) {
 	const char* err1 = gme_open_file(filename.c_str(), &emu, sample_rate);
 	
 	if (err1) {
-		std::cout << err1;
+		std::cerr << err1;
 		return 1;
 	}
 
@@ -109,7 +117,7 @@ int main ( int argc, char** argv ) {
 	gme_ignore_silence(emu, true);
 	const char* err2 = gme_start_track(emu, tracknum);
 	if (err2) {
-		std::cout << err2;
+		std::cerr << err2;
 		return 1;
 	}
 	//Run the emulator for a second while muted to eliminate opening sound glitch
@@ -131,11 +139,6 @@ int main ( int argc, char** argv ) {
 	}
 	
 	for (int i = 0; i < gme_voice_count(emu); i++) {
-		const char* err = gme_start_track(emu, tracknum);
-		if (err) {
-			std::cout << err;
-			return 1;
-		}
 		writeTheWave(emu, tracknum, tracklen_ms, i, sample_rate);
 	}
 	
