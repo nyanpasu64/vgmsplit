@@ -1,3 +1,5 @@
+#include <utility>
+
 //towave - a program to extract the channels from a chiptune file
 //Copyright 2011 Bryan Mitchell
 
@@ -44,44 +46,120 @@ std::string num2str(int x) {
 	return result.str();
 }
 
-void writeTheWave(gme_t* emu, int tracknum, int tracklen_ms, int i, int sample_rate) {
-	//The filename will be a number, followed by a space and its track title.
-	//This ensures both unique and (in most cases) descriptive file names.
-	std::string channel_name = num2str(i+1);
-	channel_name += "-";
-	channel_name += (std::string)gme_voice_name(emu, i);
-	std::cout << "Rendering track " << channel_name << "..." << std::endl;
 
-	const char* err = gme_start_track(emu, tracknum);
-	if (err) {
-		std::cerr << err;
-		exit(1);
+class ToWave {
+public:
+	ToWave(string filename, int tracknum, int tracklen_ms) :
+			filename(std::move(filename)),
+			tracknum(tracknum),
+			tracklen_ms(tracklen_ms),
+			emu(nullptr),
+			sample_rate(44100) {}
+
+	int process() {
+		// Load file.
+		const char* err1 = gme_open_file(filename.c_str(), &emu, sample_rate);
+		if (err1) {
+			std::cerr << err1;
+			return 1;
+		}
+
+		// Load length.
+		if (tracklen_ms < 0) {
+			gme_info_t* info;
+			gme_track_info(emu, &info, tracknum);
+
+			tracklen_ms = info->play_length;  // Guaranteed to be either valid, or 2.5 minutes.
+			delete info;
+		}
+
+		//Ignoring silence allows us to record tracks that start in or have
+		//long periods of silence. Unfortunately, this also means that
+		//if a track is of finite length, we still need to have its length separately.
+		gme_ignore_silence(emu, true);
+		const char* err2 = gme_start_track(emu, tracknum);
+		if (err2) {
+			std::cerr << err2;
+			return 1;
+		}
+
+		//Run the emulator for a second while muted to eliminate opening sound glitch
+		for (int len = 0; len < MS_SECOND; len = gme_tell(emu)) {
+			int m = -1;
+			m ^= 1;
+			gme_mute_voices(emu, m);
+			short buf[BUF_SIZE];
+			gme_play(emu, BUF_SIZE, buf);
+		}
+
+		// Render channels.
+		for (int channel = 0; channel < gme_voice_count(emu); channel++) {
+			writeChannel(channel);
+		}
+
+		gme_delete(emu);
+
+		return 0;
 	}
 
-	//Create a muting mask to isolate the channel
-	int mute = -1;
-	mute ^= (1 << i);
-	gme_mute_voices(emu, mute);
-	
-	//Create a buffer to hand the data from GME to wave_write
-	short buffer[BUF_SIZE];
-	
-	//Sets up the header of the WAV file so it is, in fact, a WAV
-	auto wav_name = channel_name + ".wav";
-	wave_open(sample_rate, wav_name.c_str());
-	wave_enable_stereo(); //GME always outputs in stereo
-	
-	// Set play time and record until fadeout is complete.
-	gme_set_fade(emu, tracklen_ms);
-	while (!gme_track_ended(emu)) {
-		//If an error occurs during play, we still need to close out the file
-		if (gme_play(emu, BUF_SIZE, buffer)) break;
-		wave_write(buffer, BUF_SIZE);
+private:
+	/**
+	 * Dump all channels currently unmuted in this->emu.
+	 * @param wav_name Output path
+	 */
+	void write(const string &wav_name) {
+		//Create a buffer to hand the data from GME to wave_write
+		short buffer[BUF_SIZE];     // TODO int16_t
+
+		//Sets up the header of the WAV file so it is, in fact, a WAV
+		wave_open(sample_rate, wav_name.c_str());
+		wave_enable_stereo(); //GME always outputs in stereo
+
+		// Set play time and record until fadeout is complete.
+		gme_set_fade(emu, tracklen_ms);
+		while (!gme_track_ended(emu)) {
+			//If an error occurs during play, we still need to close out the file
+			if (gme_play(emu, BUF_SIZE, buffer)) break;
+			wave_write(buffer, BUF_SIZE);
+		}
+
+		//Properly finishes the header and closes the internal file object
+		wave_close();
 	}
-	
-	//Properly finishes the header and closes the internal file object
-	wave_close();
-}
+
+	void writeChannel(int channel) {
+		//The filename will be a number, followed by a space and its track title.
+		//This ensures both unique and (in most cases) descriptive file names.
+		std::string channel_name = num2str(channel+1);
+		channel_name += "-";
+		channel_name += (std::string)gme_voice_name(emu, channel);
+		std::cout << "Rendering track " << channel_name << "..." << std::endl;
+
+		const char* err = gme_start_track(emu, tracknum);
+		if (err) {
+			std::cerr << err;
+			exit(1);
+		}
+
+		//Create a muting mask to isolate the channel
+		int mute = -1;
+		mute ^= (1 << channel);
+		gme_mute_voices(emu, mute);
+
+		auto wav_name = channel_name + ".wav";
+		write(wav_name);
+	}
+
+	// Input parameters
+	string filename;
+	int tracknum;
+	int tracklen_ms;
+
+	// Computed state
+	gme_t* emu;
+	int sample_rate;
+};
+
 
 int main ( int argc, char** argv ) {
 	CLI::App app{"towave-j: Program to record channels from chiptune files"};
@@ -102,48 +180,6 @@ int main ( int argc, char** argv ) {
 		tracklen_ms = static_cast<int>(_tracklen_s * 1000);
 	}
 
-	// Load file.
-	gme_t* emu;
-	int sample_rate = 44100;
-	const char* err1 = gme_open_file(filename.c_str(), &emu, sample_rate);
-	if (err1) {
-		std::cerr << err1;
-		return 1;
-	}
-
-	// Load length.
-	if (tracklen_ms < 0) {
-		gme_info_t* info;
-		gme_track_info(emu, &info, tracknum);
-
-		tracklen_ms = info->play_length;  // Guaranteed to be either valid, or 2.5 minutes.
-		delete info;
-	}
-
-	//Ignoring silence allows us to record tracks that start in or have
-	//long periods of silence. Unfortunately, this also means that
-	//if a track is of finite length, we still need to have its length separately.
-	gme_ignore_silence(emu, true);
-	const char* err2 = gme_start_track(emu, tracknum);
-	if (err2) {
-		std::cerr << err2;
-		return 1;
-	}
-	//Run the emulator for a second while muted to eliminate opening sound glitch
-	for (int len = 0; len < MS_SECOND; len = gme_tell(emu)) {
-		int m = -1;
-		m ^= 1;
-		gme_mute_voices(emu, m);
-		short buf[BUF_SIZE];
-		gme_play(emu, BUF_SIZE, buf);
-	}
-
-	// Render tracks.
-	for (int i = 0; i < gme_voice_count(emu); i++) {
-		writeTheWave(emu, tracknum, tracklen_ms, i, sample_rate);
-	}
-	
-	gme_delete(emu);
-	
-	return 0;
+	ToWave towave{filename, tracknum, tracklen_ms};
+	return towave.process();
 }
