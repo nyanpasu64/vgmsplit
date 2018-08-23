@@ -31,7 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 using gme_t = Music_Emu;
 using std::string;
 
-static const char* APP_NAME = "towave-j";
 static const int BUF_SIZE = 1024;
 
 static const int MS_SECOND = 1000;
@@ -46,6 +45,8 @@ std::string num2str(int x) {
 }
 
 void writeTheWave(gme_t* emu, int tracknum, int tracklen_ms, int i, int sample_rate) {
+	//The filename will be a number, followed by a space and its track title.
+	//This ensures both unique and (in most cases) descriptive file names.
 	std::string channel_name = num2str(i+1);
 	channel_name += "-";
 	channel_name += (std::string)gme_voice_name(emu, i);
@@ -65,16 +66,14 @@ void writeTheWave(gme_t* emu, int tracknum, int tracklen_ms, int i, int sample_r
 	//Create a buffer to hand the data from GME to wave_write
 	short buffer[BUF_SIZE];
 	
-	//The filename will be a number, followed by a space and its track title.
-	//This ensures both unique and (in most cases) descriptive file names.
-
 	//Sets up the header of the WAV file so it is, in fact, a WAV
 	auto wav_name = channel_name + ".wav";
 	wave_open(sample_rate, wav_name.c_str());
 	wave_enable_stereo(); //GME always outputs in stereo
 	
-	//Perform the magic.
-	while (gme_tell(emu) < tracklen_ms) {
+	// Set play time and record until fadeout is complete.
+	gme_set_fade(emu, tracklen_ms);
+	while (!gme_track_ended(emu)) {
 		//If an error occurs during play, we still need to close out the file
 		if (gme_play(emu, BUF_SIZE, buffer)) break;
 		wave_write(buffer, BUF_SIZE);
@@ -103,15 +102,25 @@ int main ( int argc, char** argv ) {
 		tracklen_ms = static_cast<int>(_tracklen_s * 1000);
 	}
 
+	// Load file.
 	gme_t* emu;
 	int sample_rate = 44100;
 	const char* err1 = gme_open_file(filename.c_str(), &emu, sample_rate);
-	
 	if (err1) {
 		std::cerr << err1;
 		return 1;
 	}
 
+	// Load length.
+	if (tracklen_ms < 0) {
+		gme_info_t* info;
+		gme_track_info(emu, &info, tracknum);
+
+		tracklen_ms = info->play_length;  // Guaranteed to be either valid, or 2.5 minutes.
+		delete info;
+	}
+
+	//Ignoring silence allows us to record tracks that start in or have
 	//long periods of silence. Unfortunately, this also means that
 	//if a track is of finite length, we still need to have its length separately.
 	gme_ignore_silence(emu, true);
@@ -129,15 +138,7 @@ int main ( int argc, char** argv ) {
 		gme_play(emu, BUF_SIZE, buf);
 	}
 
-	// If no length specified, obtain track length from file.
-	if (tracklen_ms < 0) {
-		gme_info_t* info;
-		gme_track_info(emu, &info, tracknum);
-
-		tracklen_ms = info->play_length;  // Guaranteed to be either valid, or 2.5 minutes.
-		delete info;
-	}
-	
+	// Render tracks.
 	for (int i = 0; i < gme_voice_count(emu); i++) {
 		writeTheWave(emu, tracknum, tracklen_ms, i, sample_rate);
 	}
