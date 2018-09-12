@@ -23,9 +23,10 @@ endif ()
 set_property(TARGET towave-j PROPERTY CXX_STANDARD 17)
 
 CHECK_INCLUDE_FILE_CXX(filesystem fs_exists)
-CHECK_INCLUDE_FILE_CXX(experimental/filesystem exp_fs_exists)
-
-if (NOT fs_exists)
+if (fs_exists)
+    # noop
+else ()
+    CHECK_INCLUDE_FILE_CXX(experimental/filesystem exp_fs_exists)
     if (exp_fs_exists)
         target_compile_definitions(towave-j PRIVATE EXPERIMENTAL_FS)
         if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
