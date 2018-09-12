@@ -129,7 +129,7 @@ private:
 		// Render to file.
 		fs::path wav_name = this->filename;
 		wav_name.replace_extension(WAV_EXT);
-		write(wav_name.filename());
+		write(wav_name.filename().string());
 	}
 
 	void writeChannel(int channel) {
