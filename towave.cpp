@@ -29,20 +29,28 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <string>
 #include <sstream>
 
+#ifdef EXPERIMENTAL_FS
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+#else
+#include <filesystem>
+namespace fs = std::filesystem;
+#endif
+
 
 using gme_t = Music_Emu;
 using std::string;
 
+static const char *const WAV_EXT = ".wav";
 static const int BUF_SIZE = 1024;
-
 static const int MS_SECOND = 1000;
 
 
 std::string num2str(int x) {
 	std::stringstream result;
-	
+
 	result << x;
-	
+
 	return result.str();
 }
 
@@ -93,6 +101,7 @@ public:
 		}
 
 		// Render channels.
+		writeMaster();
 		for (int channel = 0; channel < gme_voice_count(emu); channel++) {
 			writeChannel(channel);
 		}
@@ -103,13 +112,56 @@ public:
 	}
 
 private:
+	void writeMaster() {
+		std::cout << "Rendering all channels..." << std::endl;
+
+		// Initialize GEP.
+		const char* err = gme_start_track(emu, tracknum);
+		if (err) {
+			std::cerr << err;
+			exit(1);
+		}
+
+		// Unmute all channels.
+		int mute = 0;
+		gme_mute_voices(emu, mute);
+
+		// Render to file.
+		fs::path wav_name = this->filename;
+		wav_name.replace_extension(WAV_EXT);
+		write(wav_name.filename());
+	}
+
+	void writeChannel(int channel) {
+		//The filename will be a number, followed by a space and its track title.
+		//This ensures both unique and (in most cases) descriptive file names.
+		std::string channel_name = num2str(channel+1);
+		channel_name += "-";
+		channel_name += (std::string)gme_voice_name(emu, channel);
+		std::cout << "Rendering channel " << channel_name << "..." << std::endl;
+
+		const char* err = gme_start_track(emu, tracknum);
+		if (err) {
+			std::cerr << err;
+			exit(1);
+		}
+
+		//Create a muting mask to isolate the channel
+		int mute = -1;
+		mute ^= (1 << channel);
+		gme_mute_voices(emu, mute);
+
+		auto wav_name = channel_name + WAV_EXT;
+		write(wav_name);
+	}
+
 	/**
 	 * Dump all channels currently unmuted in this->emu.
 	 * @param wav_name Output path
 	 */
 	void write(const string &wav_name) {
 		//Create a buffer to hand the data from GME to wave_write
-		short buffer[BUF_SIZE];     // TODO int16_t
+		short buffer[BUF_SIZE];     // I'd use int16_t, but gme_play() and wave_write() use short[].
 
 		//Sets up the header of the WAV file so it is, in fact, a WAV
 		wave_open(sample_rate, wav_name.c_str());
@@ -125,29 +177,6 @@ private:
 
 		//Properly finishes the header and closes the internal file object
 		wave_close();
-	}
-
-	void writeChannel(int channel) {
-		//The filename will be a number, followed by a space and its track title.
-		//This ensures both unique and (in most cases) descriptive file names.
-		std::string channel_name = num2str(channel+1);
-		channel_name += "-";
-		channel_name += (std::string)gme_voice_name(emu, channel);
-		std::cout << "Rendering track " << channel_name << "..." << std::endl;
-
-		const char* err = gme_start_track(emu, tracknum);
-		if (err) {
-			std::cerr << err;
-			exit(1);
-		}
-
-		//Create a muting mask to isolate the channel
-		int mute = -1;
-		mute ^= (1 << channel);
-		gme_mute_voices(emu, mute);
-
-		auto wav_name = channel_name + ".wav";
-		write(wav_name);
 	}
 
 	// Input parameters
