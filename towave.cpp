@@ -57,12 +57,12 @@ std::string num2str(int x) {
 
 class ToWave {
 public:
-	ToWave(string filename, int tracknum, int tracklen_ms) :
+	ToWave(string filename, int tracknum, int tracklen_ms, int sample_rate) :
 			filename(std::move(filename)),
 			tracknum(tracknum),
 			tracklen_ms(tracklen_ms),
 			emu(nullptr),
-			sample_rate(44100) {}
+			sample_rate(sample_rate) {}
 
 	int process() {
 		// Load file.
@@ -196,12 +196,14 @@ int main ( int argc, char** argv ) {
 	std::string filename;
 	int tracknum = 1;
 	int tracklen_ms;
+	int sample_rate = 44100;
 	{
 		double _tracklen_s = -1;
 
 		app.add_option("filename", filename, "Any music file accepted by GME")->required();
 		app.add_option("tracknum", tracknum, "Track number (first track is 1)");
 		app.add_option("tracklen", _tracklen_s, "How long to record, in seconds");
+		app.add_option("-r,--rate", sample_rate, "Sampling rate (defaults to 44100 Hz)");
 		app.failure_message(CLI::FailureMessage::help);
 		CLI11_PARSE(app, argc, argv);
 
@@ -209,6 +211,6 @@ int main ( int argc, char** argv ) {
 		tracklen_ms = static_cast<int>(_tracklen_s * 1000);
 	}
 
-	ToWave towave{filename, tracknum, tracklen_ms};
+	ToWave towave{filename, tracknum, tracklen_ms, sample_rate};
 	return towave.process();
 }
