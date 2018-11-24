@@ -1,9 +1,9 @@
 #include <utility>
 
-//towave - a program to extract the channels from a chiptune file
+//vgmsplit - a program to extract the channels from a chiptune file
 //Copyright 2011 Bryan Mitchell
 
-// towave-j fork by nyanpasu64, 2018-
+// vgmsplit fork by nyanpasu64, 2018-
 
 /*
 This program is free software: you can redistribute it and/or modify
@@ -55,9 +55,9 @@ std::string num2str(int x) {
 }
 
 
-class ToWave {
+class VgmSplit {
 public:
-	ToWave(string filename, int tracknum, int tracklen_ms, int sample_rate) :
+	VgmSplit(string filename, int tracknum, int tracklen_ms, int sample_rate) :
 			filename(std::move(filename)),
 			tracknum(tracknum),
 			tracklen_ms(tracklen_ms),
@@ -191,7 +191,7 @@ private:
 
 
 int main ( int argc, char** argv ) {
-	CLI::App app{"towave-j: Program to record channels from chiptune files"};
+	CLI::App app{"vgmsplit: Program to record channels from chiptune files"};
 
 	std::string filename;
 	int tracknum = 1;
@@ -211,6 +211,6 @@ int main ( int argc, char** argv ) {
 		tracklen_ms = static_cast<int>(_tracklen_s * 1000);
 	}
 
-	ToWave towave{filename, tracknum, tracklen_ms, sample_rate};
-	return towave.process();
+	VgmSplit vgmsplit{filename, tracknum, tracklen_ms, sample_rate};
+	return vgmsplit.process();
 }

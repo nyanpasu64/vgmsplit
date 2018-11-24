@@ -1,4 +1,4 @@
-towave-j modifications by nyanpasu64 are released under GPLv3+.
+vgmsplit modifications by nyanpasu64 are released under GPLv3+.
 
 towave is Copyright 2011 Bryan Mitchell, licensed under GPLv3. See gpl3.txt.
 
