@@ -1,6 +1,6 @@
-# towave-j: Program to record channels from chiptune files
+# vgmsplit: Program to record channels from chiptune files
 
-`towave-j` is an improved fork of `towave rel1` by icesoldier (source code of rel2 and rel3 were never uploaded).
+`vgmsplit` is an improved fork of `towave rel1` by icesoldier (source code of rel2 and rel3 were never uploaded).
 
 ## Bugfixes
 
@@ -10,6 +10,7 @@
 
 - Automatically rips master audio (all channels together)
 - Command-line arguments for duration and track number (both optional)
+- Customizable sample rate (`-r, --rate`)
 - Fadeout (8 seconds, hard-coded by libgme)
 - More accurate YM2612 emulation
     - CMakeLists.txt with static linking to <https://bitbucket.org/mpyne/game-music-emu>
@@ -21,4 +22,4 @@
 
 ## Usage
 
-towave-j will be used in <https://github.com/corrscope/corrscope>, a multi-channel oscilloscope program with "intelligent" correlation triggering and real-time playback.
+vgmsplit will be used in <https://github.com/corrscope/corrscope>, a multi-channel oscilloscope program with "intelligent" correlation triggering and real-time playback.
