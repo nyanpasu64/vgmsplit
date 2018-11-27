@@ -41,7 +41,7 @@ endif ()
 SET(BUILD_SHARED_LIBS OFF
         CACHE BOOL "Build shared GME library")
 SET(GME_YM2612_EMU "MAME"
-        CACHE BOOL "Which YM2612 emulator to use: \"Nuked\" (LGPLv2.1+), \"MAME\" (GPLv2+), or \"GENS\" (LGPLv2.1+)")
+        CACHE STRING "Which YM2612 emulator to use: \"Nuked\" (LGPLv2.1+), \"MAME\" (GPLv2+), or \"GENS\" (LGPLv2.1+)")
 add_subdirectory(game-music-emu)
 
 
