@@ -93,8 +93,8 @@ public:
 
 		//Run the emulator for a second while muted to eliminate opening sound glitch
 		for (int len = 0; len < MS_SECOND; len = gme_tell(emu)) {
-			int m = -1;
-			m ^= 1;
+			// Mute all but channel 0.
+			int m = ~0 ^ 1;
 			gme_mute_voices(emu, m);
 			short buf[BUF_SIZE];
 			gme_play(emu, BUF_SIZE, buf);
@@ -147,7 +147,7 @@ private:
 		}
 
 		//Create a muting mask to isolate the channel
-		int mute = -1;
+		int mute = ~0;
 		mute ^= (1 << channel);
 		gme_mute_voices(emu, mute);
 
