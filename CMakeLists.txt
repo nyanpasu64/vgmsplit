@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 INCLUDE(CheckIncludeFileCXX)
 
-project(vgmsplit VERSION 3.1.0 LANGUAGES CXX C)
+project(vgmsplit VERSION 3.2.0 LANGUAGES CXX C)
 if (NOT DEFINED vgmsplit_VERSION)
     message(FATAL_ERROR "version number not working")
 endif ()
