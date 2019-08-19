@@ -197,8 +197,12 @@ private:
 };
 
 
+#ifndef VGMSPLIT_VERSION
+#define VGMSPLIT_VERSION "unknown version"
+#endif
+
 int main ( int argc, char** argv ) {
-	CLI::App app{"vgmsplit: Program to record channels from chiptune files"};
+	CLI::App app{"vgmsplit " VGMSPLIT_VERSION ": Program to record channels from chiptune files"};
 
 	std::string filename;
 	int tracknum = 1;
