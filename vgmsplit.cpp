@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "wave_writer.h"
 #include "gme/gme.h"
+#include "gme/Music_Emu.h"
 
 #include <iostream>
 #include <string>
@@ -57,10 +58,11 @@ std::string num2str(int x) {
 
 class VgmSplit {
 public:
-	VgmSplit(string filename, int tracknum, int tracklen_ms, int sample_rate) :
+	VgmSplit(string filename, int tracknum, int tracklen_ms, int fade_ms, int sample_rate) :
 			filename(std::move(filename)),
 			tracknum(tracknum),
 			tracklen_ms(tracklen_ms),
+			fade_ms(fade_ms),
 			emu(nullptr),
 			sample_rate(sample_rate) {}
 
@@ -168,8 +170,12 @@ private:
 		wave_enable_stereo(); //GME always outputs in stereo
 
 		// Set play time and record until fadeout is complete.
-		gme_set_fade(emu, tracklen_ms);
-		while (!gme_track_ended(emu)) {
+		bool should_fade = fade_ms > 0;
+
+		if (should_fade) {
+			emu->set_fade(tracklen_ms, fade_ms);
+		}
+		while (should_fade ? (!gme_track_ended(emu)) : (gme_tell(emu) < tracklen_ms)) {
 			//If an error occurs during play, we still need to close out the file
 			if (gme_play(emu, BUF_SIZE, buffer)) break;
 			wave_write(buffer, BUF_SIZE);
@@ -183,6 +189,7 @@ private:
 	string filename;
 	int tracknum;
 	int tracklen_ms;
+	int fade_ms;
 
 	// Computed state
 	gme_t* emu;
@@ -196,21 +203,25 @@ int main ( int argc, char** argv ) {
 	std::string filename;
 	int tracknum = 1;
 	int tracklen_ms;
+	int fade_ms;
 	int sample_rate = 44100;
 	{
 		double _tracklen_s = -1;
+		double _fade_s = 5;
 
 		app.add_option("filename", filename, "Any music file accepted by GME")->required();
 		app.add_option("tracknum", tracknum, "Track number (first track is 1)");
-		app.add_option("tracklen", _tracklen_s, "How long to record, in seconds");
+		app.add_option("track_len", _tracklen_s, "How long to record, in seconds (defaults to file metadata)");
+		app.add_option("fade_len", _fade_s, "How long to fade out, in seconds (defaults to 5.0 seconds, NOT .spc metadata)");
 		app.add_option("-r,--rate", sample_rate, "Sampling rate (defaults to 44100 Hz)");
 		app.failure_message(CLI::FailureMessage::help);
 		CLI11_PARSE(app, argc, argv);
 
 		tracknum -= 1;
 		tracklen_ms = static_cast<int>(_tracklen_s * 1000);
+		fade_ms = static_cast<int>(_fade_s * 1000);
 	}
 
-	VgmSplit vgmsplit{filename, tracknum, tracklen_ms, sample_rate};
+	VgmSplit vgmsplit{filename, tracknum, tracklen_ms, fade_ms, sample_rate};
 	return vgmsplit.process();
 }
