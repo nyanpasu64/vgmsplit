@@ -134,11 +134,15 @@ src = files(
 fex_inc = include_directories('../File_Extractor/fex')
 fex_src = files('../File_Extractor/fex/Data_Reader.cpp')
 
+# zlib is used to load .vgz files, and maybe others.
+zlib_dep = dependency('zlib')
+
 libgme = library('gme',
     src,
     fex_src,
     cpp_args: ['-DNDEBUG', '-DHAVE_STDINT_H', '-DHAVE_ZLIB_H'],
     include_directories: [inc, fex_inc],
+    dependencies: [zlib_dep]
 )
 
 libgme_dep = declare_dependency(
