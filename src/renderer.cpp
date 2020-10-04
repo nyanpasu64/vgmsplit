@@ -90,10 +90,14 @@ static void renderer_write(Renderer & self, char const* wav_name) {
 	wave.close();
 }
 
+int Renderer::channel_count() const {
+	return gme_voice_count(_emu);
+}
+
 void Renderer::process() {
 	// Render channels.
 	write_master();
-	for (int channel = 0; channel < gme_voice_count(_emu); channel++) {
+	for (int channel = 0; channel < channel_count(); channel++) {
 		write_channel(channel);
 	}
 }

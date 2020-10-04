@@ -11,12 +11,13 @@ project('vgmsplit', 'cpp',
 libgme_proj = subproject('game-music-emu')
 libgme_dep = libgme_proj.get_variable('libgme_dep')
 
+build_openmp = '-fopenmp'
+
 executable('vgmsplit',
     'src/main.cpp',
     'src/renderer.cpp',
     'src/wave_writer.cpp',
-    # Somehow, default_options cpp_std doesn't work.
-    override_options : ['cpp_std=c++2a'],
     dependencies: libgme_dep,
-    cpp_args: ['-DVGMSPLIT_VERSION="' + meson.project_version() + '"', '-DTEST=TEST'],
+    cpp_args: ['-DVGMSPLIT_VERSION="' + meson.project_version() + '"', build_openmp],
+    link_args: [build_openmp]
 )

@@ -32,6 +32,7 @@ using namespace vgmsplit;
 #endif
 
 using std::move;
+using renderer::Renderer;
 
 int main(int argc, char** argv) {
 	CLI::App app{"vgmsplit " VGMSPLIT_VERSION ": Program to record channels from chiptune files"};
@@ -70,7 +71,19 @@ int main(int argc, char** argv) {
 	// call multiple child processes and pass each process 1 channel.
 	// This allows the user to selectively terminate processes.
 
-	renderer::Renderer single_threaded{move(args)};
-	single_threaded.process();
+	#pragma omp parallel
+	{
+		auto renderer = renderer::Renderer(args);
+
+		#pragma omp for
+		for (int channel = -1; channel < renderer.channel_count(); ++channel) {
+			if (channel == -1) {
+				renderer.write_master();
+			} else {
+				renderer.write_channel(channel);
+			}
+		}
+	}
+
 	return 0;
 }
