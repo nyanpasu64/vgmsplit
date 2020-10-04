@@ -37,32 +37,37 @@ using renderer::Renderer;
 int main(int argc, char** argv) {
 	CLI::App app{"vgmsplit " VGMSPLIT_VERSION ": Program to record channels from chiptune files"};
 
-	Arguments args = ({
+	Arguments args;
+	bool parallel;
+	{
 		std::string filename;
 		int tracknum = 1;
 		int sample_rate = 44100;
 		double tracklen_s = -1;
 		double fade_s = 5;
+		bool no_parallel = false;
 
 		app.add_option("filename", filename, "Any music file accepted by GME")->required();
 		app.add_option("tracknum", tracknum, "Track number (first track is 1)");
 		app.add_option("track_len", tracklen_s, "How long to record, in seconds (defaults to file metadata)");
 		app.add_option("fade_len", fade_s, "How long to fade out, in seconds (defaults to 5.0 seconds, NOT .spc metadata)");
 		app.add_option("-r,--rate", sample_rate, "Sampling rate (defaults to 44100 Hz)");
+		app.add_flag("--no-parallel", no_parallel, "Disable parallel rendering of channels");
 		app.failure_message(CLI::FailureMessage::help);
 		CLI11_PARSE(app, argc, argv);
 
 		// User enters a 1-indexed number, we pass 0-indexed to libgme.
 		tracknum -= 1;
 
-		Arguments {
+		args = Arguments {
 			.filename = move(filename),
 			.tracknum = tracknum,
 			.tracklen_ms = static_cast<int>(tracklen_s * 1000),
 			.fade_ms = static_cast<int>(fade_s * 1000),
 			.sample_rate = sample_rate,
 		};
-	});
+		parallel = !no_parallel;
+	}
 
 	// WAV renderer is no longer single-threaded.
 	// TODO distribute channels across a thread pool.
@@ -71,6 +76,7 @@ int main(int argc, char** argv) {
 	// call multiple child processes and pass each process 1 channel.
 	// This allows the user to selectively terminate processes.
 
+	if (parallel)
 	#pragma omp parallel
 	{
 		auto renderer = renderer::Renderer(args);
@@ -83,6 +89,10 @@ int main(int argc, char** argv) {
 				renderer.write_channel(channel);
 			}
 		}
+	}
+	else {
+		renderer::Renderer single_threaded{move(args)};
+		single_threaded.process();
 	}
 
 	return 0;
