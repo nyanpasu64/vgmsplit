@@ -9,8 +9,8 @@ libgme_proj = subproject('game-music-emu')
 libgme_dep = libgme_proj.get_variable('libgme_dep')
 
 executable('vgmsplit',
-    'vgmsplit.cpp',
-    'wave_writer.c',
+    'src/main.cpp',
+    'src/wave_writer.c',
     # Somehow, default_options cpp_std doesn't work.
     override_options : ['cpp_std=c++2a'],
     dependencies: libgme_dep,
