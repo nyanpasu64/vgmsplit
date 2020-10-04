@@ -26,7 +26,7 @@ Renderer::Renderer(Arguments args)
 	// Load file.
 	const char* err1 = gme_open_file(_args.filename.c_str(), &_emu, _args.sample_rate);
 	if (err1) {
-		std::cerr << err1;
+		std::cerr << err1 << "\n";
 		throw std::runtime_error(err1);
 	}
 
@@ -45,7 +45,7 @@ Renderer::Renderer(Arguments args)
 	gme_ignore_silence(_emu, true);
 	const char* err2 = gme_start_track(_emu, _args.tracknum);
 	if (err2) {
-		std::cerr << err2;
+		std::cerr << err2 << "\n";
 		throw std::runtime_error(err2);
 	}
 
@@ -104,7 +104,7 @@ void Renderer::write_master() {
 	// Initialize GEP.
 	const char* err = gme_start_track(_emu, _args.tracknum);
 	if (err) {
-		std::cerr << err;
+		std::cerr << err << "\n";
 		exit(1);
 	}
 
@@ -134,7 +134,7 @@ void Renderer::write_channel(int channel) {
 
 	const char* err = gme_start_track(_emu, _args.tracknum);
 	if (err) {
-		std::cerr << err;
+		std::cerr << err << "\n";
 		exit(1);
 	}
 
