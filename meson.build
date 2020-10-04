@@ -1,10 +1,13 @@
 project('vgmsplit', 'cpp',
     version: '3.2.0',
-    default_options: ['cpp_std=c++2a']
+    default_options: ['cpp_std=c++2a', 'default_library=static'],
 )
 
+# When you change default_options, meson prints the discrepancy
+# but does not automatically apply the changes.
+# The easiest way I've found is to delete and recreate the build directory.
+# The official documentation is at https://mesonbuild.com/Configuring-a-build-directory.html .
 
-# TODO force as static library
 libgme_proj = subproject('game-music-emu')
 libgme_dep = libgme_proj.get_variable('libgme_dep')
 
