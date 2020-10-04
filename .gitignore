@@ -105,3 +105,4 @@ fabric.properties
 
 
 builddir/*
+compile_commands.json
