@@ -63,7 +63,13 @@ int main(int argc, char** argv) {
 		};
 	});
 
-	// lol wav renderer isn't reentrant, so we can't use threads
+	// WAV renderer is no longer single-threaded.
+	// TODO distribute channels across a thread pool.
+
+	// Alternatively, if the user passes in more than 1 channel,
+	// call multiple child processes and pass each process 1 channel.
+	// This allows the user to selectively terminate processes.
+
 	renderer::Renderer single_threaded{move(args)};
 	single_threaded.process();
 	return 0;

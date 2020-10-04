@@ -4,45 +4,44 @@
 #ifndef WAVE_WRITER_H
 #define WAVE_WRITER_H
 
-#ifdef __cplusplus
-	extern "C" {
+#include <cstdio>
+
+#ifndef wave_writer_INTERNAL
+#define wave_writer_INTERNAL private
 #endif
 
 /* ERRORS: If error occurs (out of memory, disk full, etc.), functions print
 cause then exit program. */
 
-void wave_open( int sample_rate, const char filename [] );
-/* EFFECTS: Creates and opens sound file of given sample rate and filename. */
-
-void wave_enable_stereo( void );
-/* EFFECTS: Enables stereo output. */
-
-void wave_write( const short in [], int count );
-/* EFFECTS: Appends count samples to file. */
-
-int wave_sample_count( void );
-/* RETURNS: Number of samples written so far. */
-
-void wave_close( void );
-/* EFFECTS: Finishes writing sound file and closes it. */
-
-#ifdef __cplusplus
-	}
-#endif
-
-#ifdef __cplusplus
-
 /* C++ interface */
 class Wave_Writer {
+wave_writer_INTERNAL:
+	FILE* _file;
+	int   _sample_count;
+	int   _sample_rate;
+	int   _chan_count;
+
 public:
 	typedef short sample_t;
-	Wave_Writer( int rate, const char file [] = "out.wav" ) { wave_open( rate, file ); }
-	void enable_stereo()                                    { wave_enable_stereo(); }
-	void write( const sample_t in [], int n )               { wave_write( in, n ); }
-	int sample_count() const                                { return wave_sample_count(); }
-	void close()                                            { wave_close(); }
-	~Wave_Writer()                                          { wave_close(); }
-};
-#endif
 
+	/// Creates and opens sound file of given sample rate and filename.
+	Wave_Writer( int new_sample_rate, const char filename [] = "out.wav" );
+
+	/// Enables stereo output.
+	void enable_stereo();
+
+	/// Appends count samples to file.
+	void write( const sample_t in [], int n );
+
+	/// Number of samples written so far.
+	int sample_count() const;
+
+	/// Finishes writing sound file and closes it.
+	/// May be called multiple times. Must be idempotent.
+	void close();
+
+	~Wave_Writer() {
+		close();
+	}
+};
 #endif

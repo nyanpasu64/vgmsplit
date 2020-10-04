@@ -1,5 +1,6 @@
 /* Game_Music_Emu 0.6-pre. http://www.slack.net/~ant/ */
 
+#define wave_writer_INTERNAL public
 #include "wave_writer.h"
 
 #include <stdlib.h>
@@ -18,12 +19,7 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 
 enum { sample_size = 2 };
 
-static FILE* file;
-static int   sample_count;
-static int   sample_rate;
-static int   chan_count;
-
-static void write_header( void );
+static void write_header(Wave_Writer & self);
 
 static void fatal_error( char const str [] )
 {
@@ -31,36 +27,32 @@ static void fatal_error( char const str [] )
 	exit( EXIT_FAILURE );
 }
 
-void wave_open( int new_sample_rate, char const filename [] )
+Wave_Writer::Wave_Writer( int new_sample_rate, char const filename [] )
 {
-	wave_close();
-	
-	file = fopen( filename, "wb" );
-	if ( !file )
+	_file = fopen( filename, "wb" );
+	if ( !_file )
 		fatal_error( "Couldn't open WAVE file for writing" );
-	
-	sample_rate = new_sample_rate;
-	write_header();
+
+	_sample_rate = new_sample_rate;
+	write_header(*this);
 }
 
-void wave_close( void )
+void Wave_Writer::close()
 {
-	if ( file )
+	// May be called multiple times. Must be idempotent.
+	if ( _file )
 	{
-		rewind( file );
-		write_header();
-		
-		fclose( file );
-		file = NULL;
+		rewind( _file );
+		write_header(*this);
+
+		fclose( _file );
+		_file = NULL;
 	}
-	
-	sample_count = 0;
-	chan_count   = 1;
 }
 
-static void write_data( void const* in, unsigned size )
+static void write_data(Wave_Writer & self, void const* in, unsigned size)
 {
-	if ( !fwrite( in, size, 1, file ) )
+	if ( !fwrite( in, size, 1, self._file ) )
 		fatal_error( "Couldn't write WAVE data" );
 }
 
@@ -72,10 +64,10 @@ static void set_le32( unsigned char p [4], unsigned n )
 	p [3] = (unsigned char) (n >> 24);
 }
 
-static void write_header()
+static void write_header(Wave_Writer & self)
 {
-	int data_size  = sample_size * sample_count;
-	int frame_size = sample_size * chan_count;
+	int data_size  = sample_size * self._sample_count;
+	int frame_size = sample_size * self._chan_count;
 	unsigned char h [0x2C] =
 	{
 		'R','I','F','F',
@@ -93,35 +85,35 @@ static void write_header()
 		0,0,0,0         /* size of sample data */
 		/* ... */       /* sample data */
 	};
-	
+
 	set_le32( h + 0x04, sizeof h - 8 + data_size );
-	h [0x16] = chan_count;
-	set_le32( h + 0x18, sample_rate );
-	set_le32( h + 0x1C, sample_rate * frame_size );
+	h [0x16] = self._chan_count;
+	set_le32( h + 0x18, self._sample_rate );
+	set_le32( h + 0x1C, self._sample_rate * frame_size );
 	h [0x20] = frame_size;
 	set_le32( h + 0x28, data_size );
-	
-	write_data( h, sizeof h );
+
+	write_data(self, h, sizeof h);
 }
 
-void wave_enable_stereo( void )
+void Wave_Writer::enable_stereo()
 {
-	chan_count = 2;
+	_chan_count = 2;
 }
 
-void wave_write( short const in [], int remain )
+void Wave_Writer::write( short const in [], int remain )
 {
-	sample_count += remain;
-	
+	_sample_count += remain;
+
 	while ( remain )
 	{
 		unsigned char buf [4096];
-		
+
 		int n = sizeof buf / sample_size;
 		if ( n > remain )
 			n = remain;
 		remain -= n;
-		
+
 		/* Convert to little-endian */
 		{
 			unsigned char* out = buf;
@@ -134,13 +126,13 @@ void wave_write( short const in [], int remain )
 				out += sample_size;
 			}
 			while ( in != end );
-			
-			write_data( buf, out - buf );
+
+			write_data(*this, buf, out - buf);
 		}
 	}
 }
 
-int wave_sample_count( void )
+int Wave_Writer::sample_count() const
 {
-	return sample_count;
+	return _sample_count;
 }

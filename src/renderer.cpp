@@ -71,8 +71,8 @@ static void renderer_write(Renderer & self, char const* wav_name) {
 	short buffer[BUF_SIZE];     // I'd use int16_t, but gme_play() and wave_write() use short[].
 
 	//Sets up the header of the WAV file so it is, in fact, a WAV
-	wave_open(_args.sample_rate, wav_name);
-	wave_enable_stereo(); //GME always outputs in stereo
+	auto wave = Wave_Writer(_args.sample_rate, wav_name);
+	wave.enable_stereo(); //GME always outputs in stereo
 
 	// Set play time and record until fadeout is complete.
 	bool should_fade = _args.fade_ms > 0;
@@ -83,11 +83,11 @@ static void renderer_write(Renderer & self, char const* wav_name) {
 	while (should_fade ? (!gme_track_ended(_emu)) : (gme_tell(_emu) < _args.tracklen_ms)) {
 		//If an error occurs during play, we still need to close out the file
 		if (gme_play(_emu, BUF_SIZE, buffer)) break;
-		wave_write(buffer, BUF_SIZE);
+		wave.write(buffer, BUF_SIZE);
 	}
 
-	//Properly finishes the header and closes the internal file object
-	wave_close();
+	// Technically unnecessary because Wave_Writer calls close() upon destruction.
+	wave.close();
 }
 
 void Renderer::process() {
