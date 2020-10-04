@@ -10,6 +10,7 @@ libgme_dep = libgme_proj.get_variable('libgme_dep')
 
 executable('vgmsplit',
     'src/main.cpp',
+    'src/renderer.cpp',
     'src/wave_writer.c',
     # Somehow, default_options cpp_std doesn't work.
     override_options : ['cpp_std=c++2a'],
