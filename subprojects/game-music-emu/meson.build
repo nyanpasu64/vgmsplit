@@ -142,6 +142,7 @@ libgme = library('gme',
 )
 
 libgme_dep = declare_dependency(
+    compile_args: ['-DHAVE_STDINT_H', '-DHAVE_ZLIB_H'],
     include_directories: [inc, fex_inc],
     link_with: libgme,
 )
