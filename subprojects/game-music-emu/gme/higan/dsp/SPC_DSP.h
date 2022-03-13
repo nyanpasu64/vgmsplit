@@ -187,7 +187,7 @@ public:
 		sample_t* out_end;
 		sample_t* out_begin;
 
-		int max_level[voice_count][2];
+		int max_level[voice_count][2] = {};
 	};
 	state_t m;
 	

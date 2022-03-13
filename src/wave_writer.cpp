@@ -28,6 +28,10 @@ static void fatal_error( char const str [] )
 }
 
 Wave_Writer::Wave_Writer( int new_sample_rate, char const filename [] )
+	: _file(nullptr)
+	, _sample_count(0)
+	, _sample_rate(0)
+	, _chan_count(0)
 {
 	_file = fopen( filename, "wb" );
 	if ( !_file )

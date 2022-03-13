@@ -79,10 +79,11 @@ int main(int argc, char** argv) {
 	if (parallel)
 	#pragma omp parallel
 	{
-		auto renderer = renderer::Renderer(args);
+		auto channel_count = renderer::Renderer(args).channel_count();
 
 		#pragma omp for
-		for (int channel = -1; channel < renderer.channel_count(); ++channel) {
+		for (int channel = -1; channel < channel_count; ++channel) {
+			auto renderer = renderer::Renderer(args);
 			if (channel == -1) {
 				renderer.write_master();
 			} else {

@@ -36,7 +36,7 @@ Renderer::Renderer(Arguments args)
 		gme_track_info(_emu, &info, _args.tracknum);
 
 		_args.tracklen_ms = info->play_length;  // Guaranteed to be either valid, or 2.5 minutes.
-		delete info;
+		gme_free_info(info);
 	}
 
 	//Ignoring silence allows us to record tracks that start in or have
