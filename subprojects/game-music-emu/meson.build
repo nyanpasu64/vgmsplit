@@ -131,22 +131,21 @@ src = files(
     'gme/higan/smp/smp.cpp',
 )
 
-fex_inc = include_directories('../File_Extractor/fex')
-fex_src = files('../File_Extractor/fex/Data_Reader.cpp')
+fex_dep = subproject('File_Extractor').get_variable('fex_dep')
 
 # zlib is used to load .vgz files, and maybe others.
 zlib_dep = dependency('zlib')
 
 libgme = library('gme',
     src,
-    fex_src,
     cpp_args: ['-DNDEBUG', '-DHAVE_STDINT_H', '-DHAVE_ZLIB_H'],
-    include_directories: [inc, fex_inc],
-    dependencies: [zlib_dep]
+    include_directories: [inc],
+    dependencies: [fex_dep, zlib_dep],
 )
 
 libgme_dep = declare_dependency(
     compile_args: ['-DHAVE_STDINT_H', '-DHAVE_ZLIB_H'],
-    include_directories: [inc, fex_inc],
+    include_directories: [inc],
+    dependencies: [fex_dep],
     link_with: libgme,
 )

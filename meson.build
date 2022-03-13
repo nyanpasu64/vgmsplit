@@ -19,5 +19,5 @@ executable('vgmsplit',
     'src/wave_writer.cpp',
     dependencies: libgme_dep,
     cpp_args: ['-DVGMSPLIT_VERSION="' + meson.project_version() + '"', build_openmp],
-    link_args: [build_openmp]
+    link_args: [build_openmp],
 )
