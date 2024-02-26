@@ -1,6 +1,6 @@
 project('vgmsplit', 'cpp',
     version: '3.2.0',
-    default_options: ['cpp_std=c++2a', 'default_library=static'],
+    default_options: ['cpp_std=c++20', 'default_library=static'],
 )
 
 # When you change default_options, meson prints the discrepancy
