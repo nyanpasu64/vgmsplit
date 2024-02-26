@@ -128,8 +128,8 @@ template<typename T> T max( T x, T y ) { return x > y ? x : y; } */
 
 BLARGG_DEF_MIN_MAX( int )
 BLARGG_DEF_MIN_MAX( unsigned )
-BLARGG_DEF_MIN_MAX( long )
-BLARGG_DEF_MIN_MAX( unsigned long )
+BLARGG_DEF_MIN_MAX( long long )
+BLARGG_DEF_MIN_MAX( unsigned long long )
 BLARGG_DEF_MIN_MAX( float )
 BLARGG_DEF_MIN_MAX( double )
 

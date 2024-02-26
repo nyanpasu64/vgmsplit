@@ -37,6 +37,7 @@
 
 #include <math.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 //#include "dosbox.h"
 #include "dbopl.h"
@@ -1444,7 +1445,7 @@ void InitTables( void ) {
 		//Add back the bits for highest ones
 		if ( i >= 16 )
 			index += 9;
-        Bitu blah = static_cast<Bitu>( reinterpret_cast<unsigned long>( &(chip->chan[ index ]) ) );
+		Bitu blah = static_cast<Bitu>( reinterpret_cast<uintptr_t>( &(chip->chan[ index ]) ) );
 		ChanOffsetTable[i] = blah;
 	}
 	//Same for operators
@@ -1458,8 +1459,8 @@ void InitTables( void ) {
 		if ( chNum >= 12 )
 			chNum += 16 - 12;
 		Bitu opNum = ( i % 8 ) / 3;
-        DBOPL::Channel* chan = 0;
-        Bitu blah = static_cast<Bitu>( reinterpret_cast<unsigned long> ( &(chan->op[opNum]) ) );
+		DBOPL::Channel* chan = 0;
+		Bitu blah = static_cast<Bitu>( reinterpret_cast<ptrdiff_t> ( &(chan->op[opNum]) ) );
 		OpOffsetTable[i] = ChanOffsetTable[ chNum ] + blah;
 	}
 #if 0

@@ -119,7 +119,7 @@ void Renderer::write_master() {
 	// Render to file.
 	auto wav_name = fs::path(_args.filename);
 	wav_name.replace_extension(WAV_EXT);
-	renderer_write(*this, wav_name.filename().c_str());
+	renderer_write(*this, wav_name.filename().string().c_str());
 }
 
 static std::string num_to_str(int x) {
